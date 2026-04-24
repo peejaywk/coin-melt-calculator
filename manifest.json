@@ -1,0 +1,19 @@
+{
+  "name": "English Coin Melt Calculator",
+  "short_name": "Coin Melt",
+  "description": "Calculate the spot melt value of English gold and silver coins in GBP",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c0c12",
+  "theme_color": "#0c0c12",
+  "orientation": "portrait",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

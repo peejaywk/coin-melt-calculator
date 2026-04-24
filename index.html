@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>English Coin Melt Calculator</title>
+  <meta name="theme-color" content="#0c0c12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coin Melt">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" id="apple-touch-icon">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg:          #0c0c12;
+      --surface:     #13131c;
+      --surface2:    #1c1c28;
+      --card:        #191924;
+      --border:      #2a2a3a;
+      --border2:     #3a3a50;
+      --text:        #eef0f6;
+      --text-dim:    #8890a8;
+      --text-muted:  #555870;
+
+      --gold:        #e8b83a;
+      --gold-bright: #f5d272;
+      --gold-dim:    #7a5c10;
+      --gold-bg:     #130f02;
+      --gold-glow:   rgba(232,184,58,.12);
+
+      --silver:      #94a3b8;
+      --silver-bright:#c8d4e8;
+      --silver-dim:  #3d4a5c;
+      --silver-bg:   #080c12;
+      --silver-glow: rgba(148,163,184,.12);
+
+      --green:  #22c55e;
+      --amber:  #f59e0b;
+      --red:    #ef4444;
+      --blue:   #60a5fa;
+
+      --r:  12px;
+      --rs: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,.5);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      line-height: 1.5;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+      padding-left: max(1.25rem, env(safe-area-inset-left));
+      padding-right: max(1.25rem, env(safe-area-inset-right));
+    }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 2rem; }
+
+    h1 {
+      font-size: clamp(1.6rem, 4.5vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      background: linear-gradient(130deg, var(--gold-bright) 0%, var(--gold) 40%, var(--silver-bright) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .3rem;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: .875rem;
+    }
+
+    /* ── Price bar ── */
+    .price-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.75rem 0 .5rem;
+      padding: 1.1rem 1.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+    }
+
+    .price-pills {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .price-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .15rem;
+      min-width: 130px;
+    }
+
+    .price-pill .lbl {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 700;
+    }
+
+    .price-pill .val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.02em;
+      min-width: 5ch;
+      text-align: center;
+    }
+
+    .price-pill .unit {
+      font-size: .65rem;
+      color: var(--text-muted);
+    }
+
+    .price-pill .sub {
+      font-size: .8rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-dim);
+      margin-top: .2rem;
+    }
+
+    .price-pill .sub-unit {
+      font-size: .6rem;
+      color: var(--text-muted);
+    }
+
+    .price-pill.gold .lbl  { color: var(--gold); }
+    .price-pill.gold .val  { color: var(--gold-bright); }
+    .price-pill.silver .lbl { color: var(--silver); }
+    .price-pill.silver .val { color: var(--silver-bright); }
+
+    .vr {
+      width: 1px;
+      height: 44px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text-dim);
+      padding: .55rem 1.1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: .8125rem;
+      font-weight: 500;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+
+    .refresh-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(96,165,250,.08);
+    }
+
+    .refresh-btn:disabled { opacity: .5; cursor: default; }
+
+    .refresh-btn svg { transition: transform .6s ease; }
+    .refresh-btn.spinning svg { animation: spin .8s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ── */
+    .status-bar {
+      font-size: .72rem;
+      text-align: center;
+      min-height: 1.5em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-bar.live   .status-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-bar.error  .status-dot { background: var(--red); }
+    .status-bar.manual .status-dot { background: var(--amber); }
+    .status-bar.live { color: var(--text-dim); }
+
+    /* ── Manual price input ── */
+    .manual-panel {
+      display: none;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border: 1px dashed var(--border2);
+      border-radius: var(--r);
+    }
+
+    .manual-panel.show { display: block; }
+
+    .manual-panel p {
+      font-size: .78rem;
+      color: var(--amber);
+      margin-bottom: .75rem;
+    }
+
+    .manual-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .manual-group {
+      display: flex;
+      flex-direction: column;
+      gap: .25rem;
+    }
+
+    .manual-group label {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-dim);
+    }
+
+    .manual-group input {
+      width: 145px;
+      padding: .45rem .65rem;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--rs);
+      color: var(--text);
+      font-size: .875rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .manual-group input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      padding: .7rem 1.5rem;
+      cursor: pointer;
+      font-size: .9375rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color .15s, border-color .15s;
+    }
+
+    .tab-btn:hover { color: var(--text-dim); }
+
+    .tab-btn.active[data-tab="gold"] {
+      color: var(--gold-bright);
+      border-bottom-color: var(--gold);
+    }
+
+    .tab-btn.active[data-tab="silver"] {
+      color: var(--silver-bright);
+      border-bottom-color: var(--silver);
+    }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Era selector ── */
+    .era-row {
+      display: flex;
+      gap: .625rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .era-label {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .55rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: .8125rem;
+      color: var(--text-dim);
+      transition: border-color .15s, color .15s, background .15s;
+      user-select: none;
+    }
+
+    .era-label input[type="radio"] { display: none; }
+
+    .era-label.checked {
+      border-color: var(--silver);
+      color: var(--silver-bright);
+      background: rgba(148,163,184,.1);
+    }
+
+    .era-label:hover:not(.checked) {
+      border-color: var(--silver-dim);
+      color: var(--text);
+    }
+
+    /* ── Coin grid ── */
+    .coin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+    }
+
+    .coin-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      transition: border-color .15s, transform .15s, background .15s, box-shadow .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gold-section .coin-card:hover {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 1px var(--gold-dim), 0 4px 20px var(--gold-glow);
+      transform: translateY(-2px);
+    }
+
+    .silver-section .coin-card:hover {
+      border-color: var(--silver-dim);
+      box-shadow: 0 0 0 1px var(--silver-dim), 0 4px 20px var(--silver-glow);
+      transform: translateY(-2px);
+    }
+
+    .coin-name {
+      font-weight: 700;
+      font-size: .9375rem;
+      margin-bottom: .15rem;
+    }
+
+    .gold-section   .coin-name { color: var(--gold-bright); }
+    .silver-section .coin-name { color: var(--silver-bright); }
+
+    .coin-denom {
+      font-size: .7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: .75rem;
+    }
+
+    .coin-stat {
+      font-size: .78rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      gap: .5rem;
+      line-height: 1.6;
+    }
+
+    .coin-stat .v {
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Coin melt value (on-card) ── */
+    .coin-melt {
+      margin-top: .75rem;
+      padding-top: .75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: .3rem;
+    }
+
+    .coin-melt-lbl {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-right: auto;
+    }
+
+    .coin-melt-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.025em;
+    }
+
+    .gold-section   .coin-melt-val { color: var(--gold-bright); }
+    .silver-section .coin-melt-val { color: var(--silver-bright); }
+
+    .coin-melt-val.pending { color: var(--text-muted); font-size: 1rem; font-weight: 400; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .72rem;
+      line-height: 1.8;
+    }
+
+    footer a { color: var(--text-dim); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* ── Responsive ── */
+
+    /* Tablet: slight tightening */
+    @media (max-width: 640px) {
+      .wrap { padding-top: 1.75rem; }
+      .coin-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+
+    /* Mobile */
+    @media (max-width: 520px) {
+      .wrap { padding-top: 1.25rem; padding-bottom: 2rem; }
+
+      /* Price bar: prices on one row, refresh button full-width below */
+      .price-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: .875rem;
+        padding: 1rem 1.1rem;
+      }
+
+      .price-pills { justify-content: space-around; gap: 0; }
+
+      .vr { display: none; }
+
+      .price-pill { min-width: 0; flex: 1; }
+      .price-pill .val { font-size: 1.35rem; }
+
+      .refresh-btn {
+        width: 100%;
+        justify-content: center;
+        padding: .7rem 1rem;
+        min-height: 44px;
+      }
+
+      /* Tabs: fill width, easy tap targets */
+      .tabs { gap: 0; }
+      .tab-btn { flex: 1; text-align: center; padding: .75rem .25rem; font-size: .875rem; min-height: 44px; }
+
+      /* Era selector: stack vertically */
+      .era-row { flex-direction: column; gap: .5rem; }
+      .era-label { justify-content: center; min-height: 44px; }
+
+      /* Coin grid: 2 columns */
+      .coin-grid { grid-template-columns: 1fr 1fr; gap: .5rem; }
+      .coin-card { padding: .875rem .875rem; }
+      .coin-name { font-size: .875rem; }
+      .coin-stat { font-size: .72rem; }
+
+      /* Prevent iOS zoom on input focus (requires font-size >= 16px) */
+      input[type="number"] { font-size: 16px; }
+    }
+
+    /* Very small phones */
+    @media (max-width: 360px) {
+      .coin-grid { grid-template-columns: 1fr; }
+      .price-pill .val { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Coin Melt Value Calculator</h1>
+    <p class="subtitle">English gold &amp; silver coins — spot metal value in GBP</p>
+  </header>
+
+  <div class="price-bar">
+    <div class="price-pills">
+      <div class="price-pill gold">
+        <span class="lbl">Gold</span>
+        <span class="val" id="gold-spot">—</span>
+        <span class="unit">per gram</span>
+        <span class="sub" id="gold-spot-oz">—</span>
+        <span class="sub-unit">per troy oz</span>
+      </div>
+      <div class="vr"></div>
+      <div class="price-pill silver">
+        <span class="lbl">Silver</span>
+        <span class="val" id="silver-spot">—</span>
+        <span class="unit">per gram</span>
+        <span class="sub" id="silver-spot-oz">—</span>
+        <span class="sub-unit">per troy oz</span>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="fetchPrices()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+
+  <div class="status-bar" id="status-bar"></div>
+
+  <div class="manual-panel" id="manual-panel">
+    <p>⚠ Live prices unavailable — enter current spot prices manually (GBP per troy oz):</p>
+    <div class="manual-row">
+      <div class="manual-group">
+        <label for="m-gold">Gold (£ / troy oz)</label>
+        <input type="number" id="m-gold" min="0" step="0.01" placeholder="e.g. 2400" oninput="onManualInput()">
+      </div>
+      <div class="manual-group">
+        <label for="m-silver">Silver (£ / troy oz)</label>
+        <input type="number" id="m-silver" min="0" step="0.01" placeholder="e.g. 30" oninput="onManualInput()">
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="gold"   onclick="switchTab('gold')">Gold Coins</button>
+    <button class="tab-btn"        data-tab="silver" onclick="switchTab('silver')">Silver Coins</button>
+  </div>
+
+  <!-- Gold section -->
+  <div class="section gold-section active" id="gold-section">
+    <div class="coin-grid" id="gold-grid"></div>
+  </div>
+
+  <!-- Silver section -->
+  <div class="section silver-section" id="silver-section">
+    <div class="era-row" id="era-row">
+      <label class="era-label checked" id="era-pre1920">
+        <input type="radio" name="era" value="pre1920" checked>
+        Pre-1920 · 92.5% silver (sterling)
+      </label>
+      <label class="era-label" id="era-1920">
+        <input type="radio" name="era" value="1920to1946">
+        1920–1946 · 50% silver
+      </label>
+    </div>
+    <div class="coin-grid" id="silver-grid"></div>
+  </div>
+
+  <footer>
+    <p>Spot prices via Coinbase · Values are indicative only and exclude fabrication premium or numismatic value · Not financial advice</p>
+    <p style="margin-top:.4rem">Coin weights from Royal Mint &amp; Coinage Act specifications</p>
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const TROY = 31.1035; // grams per troy oz
+
+const GOLD_COINS = [
+  { id: 'sovereign',         name: 'Sovereign',         denom: '£1',   gross: 7.9881,  pure: 7.3224,  purityLabel: '22 carat · 916.7‰' },
+  { id: 'half-sovereign',    name: 'Half-Sovereign',     denom: '10/–', gross: 3.9940,  pure: 3.6612,  purityLabel: '22 carat · 916.7‰' },
+  { id: 'quarter-sovereign', name: 'Quarter-Sovereign',  denom: '5/–',  gross: 1.9940,  pure: 1.8278,  purityLabel: '22 carat · 916.7‰' },
+  { id: 'double-sovereign',  name: 'Double Sovereign',   denom: '£2',   gross: 15.9762, pure: 14.6448, purityLabel: '22 carat · 916.7‰' },
+  { id: 'five-pound',        name: 'Five-Pound',         denom: '£5',   gross: 39.9405, pure: 36.6120, purityLabel: '22 carat · 916.7‰' },
+];
+
+const SILVER_COINS = [
+  { id: 'crown',       name: 'Crown',       denom: '5/–',  gross: 28.2760 },
+  { id: 'half-crown',  name: 'Half-Crown',  denom: '2/6',  gross: 14.1380 },
+  { id: 'florin',      name: 'Florin',      denom: '2/–',  gross: 11.3104 },
+  { id: 'shilling',    name: 'Shilling',    denom: '1/–',  gross: 5.6552  },
+  { id: 'sixpence',    name: 'Sixpence',    denom: '6d',   gross: 2.8276  },
+  { id: 'threepence',  name: 'Threepence',  denom: '3d',   gross: 1.4138  },
+];
+
+const ERA = {
+  pre1920:    { purity: 0.925, label: '925‰ (Sterling silver)' },
+  '1920to1946': { purity: 0.500, label: '500‰ (50% silver)'     },
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+let goldPerGram   = null;
+let silverPerGram = null;
+let currentTab    = 'gold';
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildGoldGrid();
+  buildSilverGrid();
+  wireEraButtons();
+  fetchPrices();
+  generateAppleTouchIcon();
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err =>
+      console.warn('SW registration failed:', err)
+    );
+  });
+}
+
+function generateAppleTouchIcon() {
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const ctx = c.getContext('2d');
+
+    ctx.fillStyle = '#0c0c12';
+    ctx.fillRect(0, 0, 180, 180);
+
+    ctx.strokeStyle = '#e8b83a';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(90, 90, 68, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#7a5c10';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(90, 90, 56, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f5d272';
+    ctx.font = 'bold 88px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('£', 90, 94);
+
+    const link = document.getElementById('apple-touch-icon');
+    if (link) link.href = c.toDataURL('image/png');
+  } catch (_) {}
+}
+
+// ── Grid builders ────────────────────────────────────────────────────────────
+
+function buildGoldGrid() {
+  document.getElementById('gold-grid').innerHTML = GOLD_COINS.map(c => `
+    <div class="coin-card" id="gc-${c.id}">
+      <p class="coin-name">${c.name}</p>
+      <p class="coin-denom">${c.denom}</p>
+      <div class="coin-stat"><span>Gross weight</span><span class="v">${c.gross.toFixed(4)} g</span></div>
+      <div class="coin-stat"><span>Fine gold</span><span class="v">${c.pure.toFixed(4)} g</span></div>
+      <div class="coin-melt">
+        <span class="coin-melt-lbl">Melt value</span>
+        <span class="coin-melt-val pending" id="melt-${c.id}">—</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildSilverGrid() {
+  const era = getEra();
+  document.getElementById('silver-grid').innerHTML = SILVER_COINS.map(c => {
+    const pure = (c.gross * ERA[era].purity).toFixed(4);
+    return `
+      <div class="coin-card" id="sc-${c.id}">
+        <p class="coin-name">${c.name}</p>
+        <p class="coin-denom">${c.denom}</p>
+        <div class="coin-stat"><span>Gross weight</span><span class="v">${c.gross.toFixed(4)} g</span></div>
+        <div class="coin-stat"><span>Fine silver</span><span class="v" id="sw-${c.id}">${pure} g</span></div>
+        <div class="coin-melt">
+          <span class="coin-melt-lbl">Melt value</span>
+          <span class="coin-melt-val pending" id="melt-${c.id}">—</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function refreshSilverWeights() {
+  const era = getEra();
+  SILVER_COINS.forEach(c => {
+    const el = document.getElementById(`sw-${c.id}`);
+    if (el) el.textContent = (c.gross * ERA[era].purity).toFixed(4) + ' g';
+  });
+  updateAllMeltValues();
+}
+
+function updateAllMeltValues() {
+  GOLD_COINS.forEach(c => {
+    const el = document.getElementById(`melt-${c.id}`);
+    if (!el) return;
+    if (goldPerGram !== null) {
+      el.textContent = `£${(c.pure * goldPerGram).toFixed(2)}`;
+      el.className = 'coin-melt-val';
+    } else {
+      el.textContent = '—';
+      el.className = 'coin-melt-val pending';
+    }
+  });
+  const purity = ERA[getEra()].purity;
+  SILVER_COINS.forEach(c => {
+    const el = document.getElementById(`melt-${c.id}`);
+    if (!el) return;
+    if (silverPerGram !== null) {
+      el.textContent = `£${(c.gross * purity * silverPerGram).toFixed(2)}`;
+      el.className = 'coin-melt-val';
+    } else {
+      el.textContent = '—';
+      el.className = 'coin-melt-val pending';
+    }
+  });
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  document.getElementById('gold-section').classList.toggle('active', tab === 'gold');
+  document.getElementById('silver-section').classList.toggle('active', tab === 'silver');
+}
+
+// ── Era ────────────────────────────────────────────────────────────────────
+
+function getEra() {
+  return document.querySelector('input[name="era"]:checked').value;
+}
+
+function wireEraButtons() {
+  document.querySelectorAll('input[name="era"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('era-pre1920').classList.toggle('checked', radio.value === 'pre1920' && radio.checked);
+      document.getElementById('era-1920').classList.toggle('checked', radio.value === '1920to1946' && radio.checked);
+      // keep both correct regardless of which fired
+      document.querySelectorAll('input[name="era"]').forEach(r => {
+        const label = r.closest('.era-label');
+        if (label) label.classList.toggle('checked', r.checked);
+      });
+      refreshSilverWeights();
+    });
+  });
+}
+
+// ── Price fetching ────────────────────────────────────────────────────────────
+
+async function fetchPrices() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  setStatus('', 'Fetching live prices…');
+
+  try {
+    await tryFromCoinbase();
+  } catch (e1) {
+    console.warn('[coinbase]', e1.message);
+    try {
+      await tryFromGoldPriceOrg();
+    } catch (e2) {
+      console.warn('[goldprice.org]', e2.message);
+      btn.disabled = false;
+      btn.classList.remove('spinning');
+      setStatus('error', 'Live price fetch failed — enter prices manually below');
+      document.getElementById('manual-panel').classList.add('show');
+      return;
+    }
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('spinning');
+  renderSpotPrices();
+  updateAllMeltValues();
+}
+
+// Primary: Coinbase exchange-rate API — CORS-enabled, no key, GBP rates for XAU/XAG
+async function tryFromCoinbase() {
+  const [goldRes, silverRes] = await Promise.all([
+    fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAU', { cache: 'no-store' }),
+    fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAG', { cache: 'no-store' }),
+  ]);
+  if (!goldRes.ok || !silverRes.ok) throw new Error(`HTTP ${goldRes.status}/${silverRes.status}`);
+
+  const goldData   = await goldRes.json();
+  const silverData = await silverRes.json();
+
+  // rates.GBP = price of 1 troy oz of metal in GBP
+  const goldOz   = parseFloat(goldData?.data?.rates?.GBP);
+  const silverOz = parseFloat(silverData?.data?.rates?.GBP);
+  if (!goldOz || !silverOz) throw new Error('Missing GBP rate in response');
+
+  goldPerGram   = goldOz   / TROY;
+  silverPerGram = silverOz / TROY;
+  const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  setStatus('live', `Live prices · updated ${ts}`);
+}
+
+// Fallback: goldprice.org widget API — returns GBP per troy oz directly
+async function tryFromGoldPriceOrg() {
+  const res = await fetch('https://data-asg.goldprice.org/dbXRates/GBP', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const item = data?.items?.[0];
+  if (!item?.xauPrice || !item?.xagPrice) throw new Error('Unexpected payload shape');
+
+  goldPerGram   = item.xauPrice / TROY;
+  silverPerGram = item.xagPrice / TROY;
+  const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  setStatus('live', `Live prices · updated ${ts}`);
+}
+
+// ── Manual input ──────────────────────────────────────────────────────────────
+
+function onManualInput() {
+  const gv = parseFloat(document.getElementById('m-gold').value);
+  const sv = parseFloat(document.getElementById('m-silver').value);
+  if (gv > 0) goldPerGram   = gv / TROY;
+  if (sv > 0) silverPerGram = sv / TROY;
+  renderSpotPrices();
+  updateAllMeltValues();
+  if (goldPerGram && silverPerGram) {
+    setStatus('manual', 'Using manually entered prices');
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function renderSpotPrices() {
+  if (goldPerGram !== null) {
+    document.getElementById('gold-spot').textContent    = `£${goldPerGram.toFixed(4)}`;
+    document.getElementById('gold-spot-oz').textContent = `£${(goldPerGram * TROY).toFixed(2)}`;
+  } else {
+    document.getElementById('gold-spot').textContent    = '—';
+    document.getElementById('gold-spot-oz').textContent = '—';
+  }
+  if (silverPerGram !== null) {
+    document.getElementById('silver-spot').textContent    = `£${silverPerGram.toFixed(4)}`;
+    document.getElementById('silver-spot-oz').textContent = `£${(silverPerGram * TROY).toFixed(2)}`;
+  } else {
+    document.getElementById('silver-spot').textContent    = '—';
+    document.getElementById('silver-spot-oz').textContent = '—';
+  }
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('status-bar');
+  bar.className = `status-bar${type ? ' ' + type : ''}`;
+  bar.innerHTML = type && type !== ''
+    ? `<span class="status-dot"></span>${msg}`
+    : msg;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0c0c12"/>
+  <circle cx="256" cy="256" r="200" fill="#15120a" stroke="#e8b83a" stroke-width="22"/>
+  <circle cx="256" cy="256" r="164" fill="none" stroke="#7a5c10" stroke-width="6"/>
+  <text x="256" y="336"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="248"
+        font-weight="bold"
+        text-anchor="middle"
+        fill="#f5d272">£</text>
+</svg>
