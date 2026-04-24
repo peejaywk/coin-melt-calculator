@@ -557,17 +557,17 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="gold"   onclick="switchTab('gold')">Gold Coins</button>
-    <button class="tab-btn"        data-tab="silver" onclick="switchTab('silver')">Silver Coins</button>
+    <button class="tab-btn"        data-tab="gold"   onclick="switchTab('gold')">Gold Coins</button>
+    <button class="tab-btn active" data-tab="silver" onclick="switchTab('silver')">Silver Coins</button>
   </div>
 
   <!-- Gold section -->
-  <div class="section gold-section active" id="gold-section">
+  <div class="section gold-section" id="gold-section">
     <div class="coin-grid" id="gold-grid"></div>
   </div>
 
   <!-- Silver section -->
-  <div class="section silver-section" id="silver-section">
+  <div class="section silver-section active" id="silver-section">
     <div class="era-row" id="era-row">
       <label class="era-label checked" id="era-pre1920">
         <input type="radio" name="era" value="pre1920" checked>
@@ -621,7 +621,7 @@ const ERA = {
 
 let goldPerGram   = null;
 let silverPerGram = null;
-let currentTab    = 'gold';
+let currentTab    = 'silver';
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 
