@@ -1,6 +1,12 @@
-# English Coin Melt Value Calculator
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## English Coin Melt Value Calculator
 
 A dark-mode single-page web app that calculates the spot melt value of English gold and silver coins in GBP. Built with vanilla HTML, CSS, and JavaScript — no frameworks or build step.
+
+**Live site:** https://coin-melt-calculator.onrender.com
 
 ## Files
 
@@ -14,70 +20,55 @@ A dark-mode single-page web app that calculates the spot melt value of English g
 ## Running locally
 
 ```bash
-python3 -m http.server 8080 --directory /home/peejaywk/Projects/price-calculator
+python3 -m http.server 8080
 # then open http://localhost:8080
 ```
 
-Opening as `file://` may block live price fetches due to CORS. Always serve over HTTP.
+Always serve over HTTP — opening as `file://` blocks live price fetches due to CORS.
 
-## Installing as a mobile web app
+## Architecture
 
-The app is a PWA. Serve it over HTTP/HTTPS, then:
-- **iOS Safari**: Share → Add to Home Screen
-- **Android Chrome**: three-dot menu → Add to Home Screen (or prompted automatically)
+The entire app lives in `index.html` as a single file: `<style>` block, HTML markup, then a `<script>` block. There is no build step, no bundler, and no test suite.
 
-## Coin data
+**Boot sequence** (`DOMContentLoaded`): `buildGoldGrid()` → `buildSilverGrid()` → `wireEraButtons()` → `fetchPrices()` → `generateAppleTouchIcon()`
 
-All weights are sourced from Royal Mint and Coinage Act specifications and are defined as constants at the top of the `<script>` block in `index.html`.
+**State:** Two module-level variables (`goldPerGram`, `silverPerGram`) hold current spot prices in GBP/gram. All melt values are derived from these on demand.
 
-### Gold coins (all 22 carat, 916.7‰)
-
-| Coin | Gross (g) | Fine gold (g) |
-|------|-----------|---------------|
-| Sovereign (£1) | 7.9881 | 7.3224 |
-| Half-Sovereign (10/–) | 3.9940 | 3.6612 |
-| Quarter-Sovereign (5/–) | 1.9940 | 1.8278 |
-| Double Sovereign (£2) | 15.9762 | 14.6448 |
-| Five-Pound (£5) | 39.9405 | 36.6120 |
-
-### Silver coins
-
-Two era options, same gross weights:
-
-| Coin | Gross (g) | Pre-1920 fine (g) @ 92.5% | 1920–1946 fine (g) @ 50% |
-|------|-----------|---------------------------|--------------------------|
-| Crown (5/–) | 28.2760 | 26.1553 | 14.1380 |
-| Half-Crown (2/6) | 14.1380 | 13.0777 | 7.0690 |
-| Florin (2/–) | 11.3104 | 10.4621 | 5.6552 |
-| Shilling (1/–) | 5.6552 | 5.2311 | 2.8276 |
-| Sixpence (6d) | 2.8276 | 2.6155 | 1.4138 |
-| Threepence (3d) | 1.4138 | 1.3078 | 0.7069 |
-
-## Live price feeds
-
-Prices are fetched at page load and on demand via the Refresh button. Two sources are tried in order:
-
-1. **Coinbase exchange-rate API** (primary) — `https://api.coinbase.com/v2/exchange-rates?currency=XAU` and `XAG`. Returns GBP per troy oz. CORS-enabled, no API key required.
-2. **GoldPrice.org widget API** (fallback) — `https://data-asg.goldprice.org/dbXRates/GBP`. Returns GBP per troy oz directly.
-
-If both fail, a manual input panel appears accepting GBP per troy oz for each metal.
-
-All internal calculations use **GBP per gram** (`price / 31.1035`). The price bar displays both per-gram and per-troy-oz for reference.
+**Coin data** is defined as constants (`GOLD_COINS`, `SILVER_COINS`, `ERA`) at the top of the script block. Weights are from Royal Mint and Coinage Act specifications. All calculations use `price / 31.1035` (grams per troy oz) internally.
 
 ## Key JavaScript functions
 
 | Function | What it does |
 |----------|-------------|
-| `fetchPrices()` | Orchestrates API fetch with fallback chain |
-| `updateAllMeltValues()` | Recalculates and updates every coin card's melt value |
+| `fetchPrices()` | Orchestrates API fetch with fallback chain; shows manual input panel on total failure |
+| `tryFromCoinbase()` | Primary price source — `XAU`/`XAG` exchange rates from Coinbase API |
+| `tryFromGoldPriceOrg()` | Fallback price source — goldprice.org widget API |
+| `updateAllMeltValues()` | Recalculates and updates every coin card's melt value display |
 | `renderSpotPrices()` | Updates the gold/silver per-gram and per-troy-oz display in the price bar |
 | `refreshSilverWeights()` | Updates displayed fine-silver weights when era selector changes; calls `updateAllMeltValues()` |
 | `buildGoldGrid()` / `buildSilverGrid()` | Renders coin cards into the DOM |
 
+## DOM ID conventions
+
+Coin card elements use prefixed IDs derived from `coin.id`:
+- `gc-{id}` — gold coin card wrapper
+- `sc-{id}` — silver coin card wrapper
+- `melt-{id}` — melt value `<span>` on each card (shared prefix for gold and silver)
+- `sw-{id}` — fine silver weight `<span>` on silver cards
+
+## Live price feeds
+
+Coinbase is the sole source; manual input panel shown on failure:
+
+- **Coinbase** — single request: `https://api.coinbase.com/v2/exchange-rates?currency=XAG`. `rates.GBP` gives silver price (GBP/oz); gold is derived via the XAU cross-rate: `rates.GBP / rates.XAU`. CORS-enabled, no API key.
+
+The service worker (`sw.js`) explicitly bypasses its cache for this API URL so prices are always fresh.
+
 ## Design notes
 
-- Dark theme using CSS custom properties (`--bg`, `--gold`, `--silver`, etc.) defined in `:root`
-- Responsive at 640 px (tablet), 520 px (mobile — stacked price bar, 2-column grid, 44 px touch targets), and 360 px (single column)
-- `viewport-fit=cover` and `env(safe-area-inset-*)` used for notched phones
-- iOS `font-size: 16px` on number inputs to prevent auto-zoom
+- Dark theme via CSS custom properties (`--bg`, `--gold`, `--silver`, etc.) defined in `:root`
+- Responsive breakpoints: 640 px (tablet), 520 px (mobile — stacked price bar, 2-column grid, 44 px touch targets), 360 px (single column)
+- `viewport-fit=cover` and `env(safe-area-inset-*)` for notched phones
+- `font-size: 16px` on number inputs prevents iOS auto-zoom
 - Apple touch icon generated at runtime via `<canvas>` and injected into `<link rel="apple-touch-icon">`
+- Silver tab is the default active tab on load

@@ -786,18 +786,13 @@ async function fetchPrices() {
 
   try {
     await tryFromCoinbase();
-  } catch (e1) {
-    console.warn('[coinbase]', e1.message);
-    try {
-      await tryFromGoldPriceOrg();
-    } catch (e2) {
-      console.warn('[goldprice.org]', e2.message);
-      btn.disabled = false;
-      btn.classList.remove('spinning');
-      setStatus('error', 'Live price fetch failed — enter prices manually below');
-      document.getElementById('manual-panel').classList.add('show');
-      return;
-    }
+  } catch (e) {
+    console.warn('[coinbase]', e.message);
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+    setStatus('error', 'Live price fetch failed — enter prices manually below');
+    document.getElementById('manual-panel').classList.add('show');
+    return;
   }
 
   btn.disabled = false;
@@ -806,38 +801,22 @@ async function fetchPrices() {
   updateAllMeltValues();
 }
 
-// Primary: Coinbase exchange-rate API — CORS-enabled, no key, GBP rates for XAU/XAG
+// Coinbase exchange-rate API — single XAG request; gold derived via XAU cross-rate
 async function tryFromCoinbase() {
-  const [goldRes, silverRes] = await Promise.all([
-    fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAU', { cache: 'no-store' }),
-    fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAG', { cache: 'no-store' }),
-  ]);
-  if (!goldRes.ok || !silverRes.ok) throw new Error(`HTTP ${goldRes.status}/${silverRes.status}`);
-
-  const goldData   = await goldRes.json();
-  const silverData = await silverRes.json();
-
-  // rates.GBP = price of 1 troy oz of metal in GBP
-  const goldOz   = parseFloat(goldData?.data?.rates?.GBP);
-  const silverOz = parseFloat(silverData?.data?.rates?.GBP);
-  if (!goldOz || !silverOz) throw new Error('Missing GBP rate in response');
-
-  goldPerGram   = goldOz   / TROY;
-  silverPerGram = silverOz / TROY;
-  const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  setStatus('live', `Live prices · updated ${ts}`);
-}
-
-// Fallback: goldprice.org widget API — returns GBP per troy oz directly
-async function tryFromGoldPriceOrg() {
-  const res = await fetch('https://data-asg.goldprice.org/dbXRates/GBP', { cache: 'no-store' });
+  const res = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=XAG', { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const item = data?.items?.[0];
-  if (!item?.xauPrice || !item?.xagPrice) throw new Error('Unexpected payload shape');
 
-  goldPerGram   = item.xauPrice / TROY;
-  silverPerGram = item.xagPrice / TROY;
+  const data = await res.json();
+  const rates = data?.data?.rates;
+
+  // rates.GBP  = GBP per troy oz of silver
+  // rates.XAU  = troy oz of gold per troy oz of silver (cross-rate)
+  const silverOz  = parseFloat(rates?.GBP);
+  const xauPerXag = parseFloat(rates?.XAU);
+  if (!silverOz || !xauPerXag) throw new Error('Missing GBP or XAU rate in response');
+
+  silverPerGram = silverOz / TROY;
+  goldPerGram   = (silverOz / xauPerXag) / TROY;
   const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   setStatus('live', `Live prices · updated ${ts}`);
 }
